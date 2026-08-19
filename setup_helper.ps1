@@ -13,10 +13,9 @@ $python = (Get-Command python).Source
 $action  = New-ScheduledTaskAction -Execute $python -Argument "`"$helper`"" -WorkingDirectory $root
 
 # Double triggers: at startup AND at user logon - whichever fires first starts the helper
-$trigger = @(
-    New-ScheduledTaskTrigger -AtStartup,
-    New-ScheduledTaskTrigger -AtLogOn -User "$env:USERNAME"
-)
+$t1 = New-ScheduledTaskTrigger -AtStartup
+$t2 = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERNAME"
+$trigger = @($t1, $t2)
 
 $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
 
