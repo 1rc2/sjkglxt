@@ -23,7 +23,7 @@ import sys
 import time
 from threading import Thread
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 MYSQL_PORT = 3306
 BACKEND_PORT = 5000
@@ -35,6 +35,24 @@ BACKEND_CMD = [sys.executable, os.path.join(BASE_DIR, 'server.py')]
 app = Flask(__name__)
 
 _backend_proc = None           # 后端进程句柄
+
+
+# ---------------------------------------------------------------------------
+# CORS 支持（APK 内页面通过 file:// 跨源访问本助手接口）
+# ---------------------------------------------------------------------------
+@app.after_request
+def add_cors_headers(resp):
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return resp
+
+
+@app.before_request
+def handle_preflight():
+    """处理浏览器/WebView 的 OPTIONS 预检请求"""
+    if request.method == 'OPTIONS':
+        return ('', 204)
 
 
 # ---------------------------------------------------------------------------
@@ -67,8 +85,8 @@ def start_mysql_service():
     if port_open(MYSQL_PORT):
         return True, 'MySQL 已在运行'
     if not is_admin():
-        request_admin()  # 提权后本进程退出，新进程重跑
-        return False, '正在请求管理员权限，请在 UAC 弹窗中点击"是"'
+        # 提示用户以管理员权限运行，避免提权后新旧进程争抢 5001 端口
+        return False, '助手未以管理员权限运行，无法启动 MySQL。请右键"以管理员身份运行"start_helper.py'
     subprocess.run(['sc', 'start', MYSQL_SERVICE],
                    capture_output=True, shell=True)
     for _ in range(30):

@@ -48,9 +48,11 @@ function api(url, options) {
 
 function apiRaw(base, url, timeoutMs) {
   /* 直连指定地址（如助手 5001），带超时（兼容旧版 WebView，不用 finally） */
-  var ctrl = new AbortController();
-  var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs || 6000);
-  return fetch(base + url, { signal: ctrl.signal })
+  /* 部分旧 WebView 不支持 AbortController，此时退化为无超时请求 */
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, timeoutMs || 6000);
+  var opts = ctrl ? { signal: ctrl.signal } : {};
+  return fetch(base + url, opts)
     .then(function (r) { clearTimeout(timer); return r.json(); })
     .then(function (j) { return j; })
     .catch(function () { clearTimeout(timer); return { ok: false }; });
@@ -163,6 +165,13 @@ function startComputerService(onDone) {
     var tries = 0;
     var timer = setInterval(function () {
       apiRaw(HELPER_BASE, '/status', 5000).then(function (st) {
+        /* 请求失败（如 CORS/网络不通）时立即提示，避免空等 40 秒 */
+        if (!st || st.ok === false) {
+          clearInterval(timer);
+          showStartServiceStatus('无法连接电脑助手，请确认电脑已开机、助手已启动，且手机与电脑在同一Wi-Fi。', '#e74c3c');
+          if (onDone) onDone(false);
+          return;
+        }
         var mysqlOk = st.mysql === true;
         var backendOk = st.backend === true;
         var dbOk = st.db === true;
@@ -206,6 +215,8 @@ function openServerConfig() {
 function saveServerConfig() {
   var v = $('server-input').value.trim().replace(/\/+$/, '');
   if (!v) { showMsg('提示', '请输入服务器地址！'); return; }
+  /* 缺省端口时自动补 5000（后端默认端口） */
+  if (!/:\d+$/.test(v)) v = v + ':5000';
   API_BASE = v;
   /* 同步助手地址（端口 5000->5001） */
   if (!window.__HELPER_BASE__) HELPER_BASE = v.replace(/:\d+$/, ':5001');
