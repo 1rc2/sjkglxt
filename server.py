@@ -46,7 +46,7 @@ TABLE_META = {
         'title': '院系表 (depart)',
         'columns': ['depart_id', 'depart_name'],
         'headers': ['院系编号', '院系名称'],
-        'query_sql': 'SELECT * FROM depart',
+        'query_sql': 'SELECT * FROM depart ORDER BY depart_id',
         'pk': 'depart_id',
         'form_fields': [('depart_name', '院系名称', 'str')],
     },
@@ -56,7 +56,8 @@ TABLE_META = {
         'headers': ['学号', '姓名', '性别', '所属院系', '联系电话'],
         'query_sql': """SELECT s.stu_id, s.name, s.gender, d.depart_name AS depart_name,
                                s.depart_id, s.phone
-                        FROM student s JOIN depart d ON s.depart_id = d.depart_id""",
+                        FROM student s JOIN depart d ON s.depart_id = d.depart_id
+                        ORDER BY s.stu_id""",
         'pk': 'stu_id',
         'form_fields': [
             ('stu_id', '学号(10位数字)', 'stuid'),
@@ -70,7 +71,7 @@ TABLE_META = {
         'title': '竞赛表 (competition)',
         'columns': ['com_id', 'com_name', 'level', 'hold_year'],
         'headers': ['竞赛编号', '竞赛名称', '竞赛级别', '举办年份'],
-        'query_sql': 'SELECT * FROM competition',
+        'query_sql': 'SELECT * FROM competition ORDER BY com_id',
         'pk': 'com_id',
         'form_fields': [
             ('com_name', '竞赛名称', 'str'),
@@ -82,7 +83,7 @@ TABLE_META = {
         'title': '奖项表 (award)',
         'columns': ['award_id', 'award_name', 'rank'],
         'headers': ['奖项编号', '奖项名称', '获奖等级'],
-        'query_sql': 'SELECT * FROM award',
+        'query_sql': 'SELECT * FROM award ORDER BY award_id',
         'pk': 'award_id',
         'form_fields': [
             ('award_name', '奖项名称', 'str'),
@@ -101,7 +102,8 @@ TABLE_META = {
                         FROM record r
                         JOIN student s     ON r.stu_id   = s.stu_id
                         JOIN competition c ON r.com_id   = c.com_id
-                        JOIN award a       ON r.award_id = a.award_id""",
+                        JOIN award a       ON r.award_id = a.award_id
+                        ORDER BY r.rec_id""",
         'pk': 'rec_id',
         'form_fields': [
             ('stu_id', '学号', 'stuid_select'),
@@ -336,10 +338,10 @@ def api_meta():
 def api_options():
     t = request.args.get('type', '')
     sqls = {
-        'depart': 'SELECT depart_id AS id, depart_name AS name FROM depart',
-        'student': 'SELECT stu_id AS id, name FROM student',
-        'competition': 'SELECT com_id AS id, com_name AS name FROM competition',
-        'award': 'SELECT award_id AS id, award_name AS name FROM award',
+        'depart': 'SELECT depart_id AS id, depart_name AS name FROM depart ORDER BY depart_id',
+        'student': 'SELECT stu_id AS id, name FROM student ORDER BY stu_id',
+        'competition': 'SELECT com_id AS id, com_name AS name FROM competition ORDER BY com_id',
+        'award': 'SELECT award_id AS id, award_name AS name FROM award ORDER BY award_id',
     }
     if t not in sqls:
         return jsonify({'ok': False, 'msg': '未知选项类型：{}'.format(t)})
@@ -475,6 +477,12 @@ def api_search():
         sql = '{} WHERE {}'.format(base_sql, ' AND '.join(conditions))
     else:
         sql = base_sql
+    # 统一按主键排序，保证结果顺序稳定
+    order_by = {
+        'depart': 'depart_id', 'student': 's.stu_id', 'competition': 'com_id',
+        'award': 'award_id', 'record': 'r.rec_id',
+    }[table]
+    sql = '{} ORDER BY {}'.format(sql, order_by)
     try:
         rows = DB.query(sql, tuple(params))
     except DatabaseError as e:

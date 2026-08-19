@@ -742,6 +742,17 @@ function drawLineChart(canvas, data, title, xlabel) {
   ctx.fillText(xlabel, w / 2, h - 12);
 }
 
+var currentChart = null;  // 当前图表 {type, data}，横屏切换时用于重绘
+
+function renderChart() {
+  if (!currentChart) return;
+  if (currentChart.type === 'depart_bar') {
+    drawBarChart($('chart-canvas'), currentChart.data, '各院系获奖人数统计', '院系');
+  } else {
+    drawLineChart($('chart-canvas'), currentChart.data, '历年参赛人数统计', '年份');
+  }
+}
+
 function drawChart() {
   var type = $('chart-select').value;
   var url = type === 'depart_bar' ? '/api/stat/depart_award' : '/api/stat/year_join';
@@ -749,16 +760,19 @@ function drawChart() {
     if (!res.ok) { showMsg('错误', res.msg); return; }
     if (!res.data || !res.data.length) {
       showMsg('提示', type === 'depart_bar' ? '暂无获奖记录数据！' : '暂无参赛记录数据！');
+      currentChart = null;
       clearChart();
       return;
     }
-    if (type === 'depart_bar') {
-      drawBarChart($('chart-canvas'), res.data, '各院系获奖人数统计', '院系');
-    } else {
-      drawLineChart($('chart-canvas'), res.data, '历年参赛人数统计', '年份');
-    }
+    currentChart = { type: type, data: res.data };
+    renderChart();
   });
 }
+
+/* 横竖屏切换 / 窗口尺寸变化时重绘图表 */
+window.addEventListener('resize', function () {
+  if (currentChart) renderChart();
+});
 
 /* ==========================================================================
    报表导出（txt）

@@ -183,3 +183,34 @@ tbody tr:active { background: #d4e6f1; }
   font-size: 14px; background: #fff; margin-bottom: 14px; outline: none;
 }
 #server-input:focus { border-color: #1a6fb5; }
+
+/* ==========================================================================
+   横屏适配（orientation: landscape）
+   手机横屏时高度变矮、宽度变宽，优化表格与布局
+   ========================================================================== */
+@media (orientation: landscape) {
+  .main-screen { height: 100vh; }
+
+  /* 顶部栏更紧凑 */
+  .topbar { padding: 8px 12px; font-size: 12px; }
+
+  /* 内容区横屏时减少底部留白 */
+  .content { padding: 8px 12px 70px; }
+
+  /* 底部导航更矮 */
+  .tabbar-item { padding: 8px 0; font-size: 12px; }
+
+  /* 数据表格横屏利用宽屏展示更多列 */
+  .table-wrap { max-height: calc(100vh - 220px); }
+  table { min-width: 100%; }
+
+  /* 登录页横屏：卡片改窄、去多余留白 */
+  .login-card { max-width: 340px; padding: 20px 20px; }
+  .login-title { margin-bottom: 14px; }
+
+  /* 统计图表横屏高度略降 */
+  .chart-card { height: 240px; }
+
+  /* 表单弹窗横屏时更紧凑 */
+  .sheet { max-height: 92vh; }
+}
