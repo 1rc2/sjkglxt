@@ -23,15 +23,21 @@ MySQL 数据库 (competition_db, 5 张表)
 ## 二、目录结构
 
 ```
-├── server.py          # Flask 后端 API 服务（主入口）
+├── server.py          # Flask 后端 API 服务（主入口，含 CORS）
 ├── db.py              # 数据库封装（pymysql 单例，原版保留）
 ├── database.sql       # 建库建表 + 测试数据（原版保留）
 ├── requirements.txt   # 依赖：flask / pymysql
 ├── start_server.bat   # 一键启动后端（Windows）
+├── sjkglxt.apk        # 已打包好的安卓安装包
 ├── app/               # 移动端界面
 │   ├── index.html     # 页面结构（登录页 / 主界面 / 弹窗）
 │   ├── css/style.css  # 样式（复刻 PyQt5 配色）
-│   └── js/app.js      # 逻辑（登录/CRUD/查询/图表/导出）
+│   └── js/app.js      # 逻辑（登录/CRUD/查询/图表/导出/服务器配置）
+├── android/           # 安卓 APK 打包工程
+│   ├── AndroidManifest.xml
+│   ├── src/           # WebView 壳源码 (MainActivity.java)
+│   ├── build_apk.ps1  # 本机一键打包脚本
+│   └── icon_char.txt  # 应用图标文字
 └── README.md
 ```
 
@@ -99,9 +105,26 @@ python server.py
 
 5 张表：院系表 depart、学生表 student、竞赛表 competition、奖项表 award、参赛记录表 record。
 
-## 六、打包成安卓 APK（可选）
+## 六、打包成安卓 APK
 
-推荐用 HBuilderX 云打包，免安卓环境：
+**方式一：本机一键打包（已测试通过，推荐）**
+
+本机已具备 Android SDK 时，直接在项目目录执行：
+
+```bash
+powershell -ExecutionPolicy Bypass -File android\build_apk.ps1
+```
+
+脚本自动完成：复制界面资源 → 生成图标 → 资源编译 → Java 编译 → 打包 → 签名，
+产物为项目根目录 `sjkglxt.apk`（约 25KB），可直接安装到安卓手机。
+
+APK 特点：
+- 界面资源内置在 APK（离线加载，秒开）；
+- 首次打开会弹出"服务器设置"，填写电脑端地址（如 `http://192.168.1.247:5000`），
+  数据即走该后端访问 MySQL（登录页左下角 ⚙ 服务器设置 可随时修改）；
+- 已加 CORS 支持，APK 内页面可跨源访问后端 API。
+
+**方式二：HBuilderX 云打包（免本机环境）**
 
 1. 下载安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html)（免费）；
 2. 新建项目：`文件 → 新建 → 项目`，模板选 **5+ App（HTML5+）**，名称如 `sjkglxt`；
@@ -110,9 +133,8 @@ python server.py
 5. 点击菜单 `发行 → 原生App-云打包`，选择 **Android**，证书选"使用公共测试证书"，点打包；
 6. 打包完成后下载 APK，安装到手机即可。
 
-> 说明：APK 内页面访问的后端地址由部署电脑的局域网 IP 决定，正式使用建议将后端部署到云服务器，并在 `app/js/app.js` 中改为服务器域名（当前为同源相对路径，直接跟随访问地址）。
-
-**免打包替代方案**：手机浏览器打开后，选择"添加到主屏幕"，即可全屏运行，体验接近原生 APP。
+> 说明：无论哪种方式，正式使用建议将后端部署到云服务器，并在 APP 的服务器设置中改为服务器域名。
+> 手机与电脑需同一局域网；Windows 防火墙需放行 5000 端口。
 
 ## 七、数据恢复
 

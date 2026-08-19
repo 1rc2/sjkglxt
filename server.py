@@ -585,6 +585,24 @@ def api_health():
 
 
 # ---------------------------------------------------------------------------
+# 9.5 CORS 支持（APK 内嵌页面通过 file:// 跨源访问本 API）
+# ---------------------------------------------------------------------------
+@app.after_request
+def add_cors_headers(resp):
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return resp
+
+
+@app.before_request
+def handle_preflight():
+    """处理浏览器/WebView 的 OPTIONS 预检请求"""
+    if request.method == 'OPTIONS':
+        return ('', 204)
+
+
+# ---------------------------------------------------------------------------
 # 10. 移动端界面入口
 # ---------------------------------------------------------------------------
 @app.route('/')

@@ -18,11 +18,24 @@ var state = {
 
 var formOptionsCache = {};  // 下拉选项缓存: depart/student/competition/award
 
+/* ==========================================================================
+   服务器地址配置
+   - 浏览器直接访问后端(http://IP:5000)：API_BASE 为空，同源访问
+   - APK 内嵌页面(file://)：首次启动弹出配置框，地址保存在 localStorage
+   ========================================================================== */
+var API_BASE = '';
+(function () {
+  var saved = '';
+  try { saved = localStorage.getItem('api_base') || ''; } catch (e) {}
+  if (window.__API_BASE__) saved = window.__API_BASE__;
+  API_BASE = saved.replace(/\/+$/, '');
+})();
+
 function $(id) { return document.getElementById(id); }
 
 /* 网络异常时统一转为可读错误，前端各处只需判断 res.ok */
 function api(url, options) {
-  return fetch(url, options).then(function (r) { return r.json(); })
+  return fetch(API_BASE + url, options).then(function (r) { return r.json(); })
     .catch(function () { return { ok: false, msg: '无法连接服务器，请确认后端已启动！' }; });
 }
 
@@ -78,12 +91,29 @@ function doLogin() {
     if (res.ok) {
       state.username = u;
       enterMain();
+    } else if (res.msg.indexOf('无法连接服务器') === 0) {
+      openServerConfig();
     } else {
       $('login-msg').textContent = res.msg;
       $('login-pass').value = '';
       $('login-pass').focus();
     }
   });
+}
+
+/* 服务器地址配置弹窗 */
+function openServerConfig() {
+  $('server-input').value = API_BASE || '';
+  $('config-mask').style.display = 'flex';
+}
+
+function saveServerConfig() {
+  var v = $('server-input').value.trim().replace(/\/+$/, '');
+  if (!v) { showMsg('提示', '请输入服务器地址！'); return; }
+  API_BASE = v;
+  try { localStorage.setItem('api_base', v); } catch (e) {}
+  $('config-mask').style.display = 'none';
+  showMsg('已保存', '服务器地址已保存：' + v);
 }
 
 function enterMain() {
@@ -759,3 +789,22 @@ function downloadReport() {
   a.download = '竞赛成果统计报表.txt';
   a.click();
 }
+
+/* ==========================================================================
+   初始化：配置弹窗绑定 + 首次启动检测
+   ========================================================================== */
+$('btn-server-set').addEventListener('click', openServerConfig);
+$('btn-config-cancel').addEventListener('click', function () {
+  $('config-mask').style.display = 'none';
+});
+$('btn-config-save').addEventListener('click', saveServerConfig);
+$('server-input').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') saveServerConfig();
+});
+
+/* APK 内嵌模式（file://）且未配置过服务器地址时，弹出配置框 */
+window.addEventListener('load', function () {
+  if (!API_BASE && location.protocol === 'file:') {
+    openServerConfig();
+  }
+});
