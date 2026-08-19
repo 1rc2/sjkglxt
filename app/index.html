@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>大学生竞赛成果管理系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ==================== 登录页 ==================== -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-title">大学生竞赛成果管理系统</div>
+    <div class="login-form">
+      <input id="login-user" type="text" placeholder="请输入用户名" autocomplete="username">
+      <input id="login-pass" type="password" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <div class="login-tip">默认账号: admin    默认密码: admin123</div>
+    <button id="login-btn" class="btn btn-primary btn-block">登 录</button>
+    <div id="login-msg" class="login-msg"></div>
+  </div>
+</div>
+
+<!-- ==================== 主界面 ==================== -->
+<div id="main-screen" class="main-screen" style="display:none">
+  <header class="topbar" id="topbar"></header>
+
+  <main class="content">
+    <!-- ── 数据管理 ── -->
+    <section id="tab-data" class="tab-panel">
+      <div class="toolbar-row">
+        <span class="toolbar-label">选择数据表:</span>
+        <select id="table-select"></select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-refresh" id="btn-refresh">🔄 刷新</button>
+        <button class="btn btn-add" id="btn-add">➕ 新增</button>
+        <button class="btn btn-edit" id="btn-edit">✏️ 修改</button>
+        <button class="btn btn-del" id="btn-del">🗑️ 删除</button>
+      </div>
+
+      <!-- 多条件联合查询 -->
+      <div class="search-card">
+        <div class="search-title">🔍 多条件联合查询（条件之间为 AND 关系）</div>
+        <div id="search-rows"></div>
+        <div class="btn-row">
+          <button class="btn btn-search" id="btn-search">🔎 查询</button>
+          <button class="btn btn-clear" id="btn-clear">🧹 清空条件</button>
+        </div>
+      </div>
+
+      <!-- 数据表格 -->
+      <div class="table-wrap">
+        <table id="data-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-tip" id="table-tip"></div>
+    </section>
+
+    <!-- ── 统计分析 ── -->
+    <section id="tab-stat" class="tab-panel" style="display:none">
+      <div class="toolbar-row">
+        <span class="toolbar-label">统计图表类型:</span>
+        <select id="chart-select">
+          <option value="depart_bar">📊 各院系获奖人数统计（柱状图）</option>
+          <option value="year_line">📈 历年参赛人数统计（折线图）</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-draw" id="btn-draw">🎨 绘制图表</button>
+        <button class="btn btn-export" id="btn-export">📄 导出统计报表</button>
+      </div>
+      <div class="chart-card">
+        <canvas id="chart-canvas"></canvas>
+        <div id="chart-empty" class="chart-empty">点击"绘制图表"查看统计结果</div>
+      </div>
+      <div class="chart-tip">提示：点击"绘制图表"查看统计结果，点击"导出统计报表"将结果保存为 txt 文件。</div>
+    </section>
+  </main>
+
+  <!-- 底部导航 -->
+  <nav class="tabbar">
+    <div class="tabbar-item active" data-tab="data">📋 数据管理</div>
+    <div class="tabbar-item" data-tab="stat">📊 统计分析</div>
+  </nav>
+</div>
+
+<!-- ==================== 记录编辑弹窗 ==================== -->
+<div id="form-mask" class="mask" style="display:none">
+  <div class="sheet">
+    <div class="sheet-title" id="form-title"></div>
+    <div class="sheet-body" id="form-body"></div>
+    <div class="btn-row sheet-btn-row">
+      <button class="btn btn-save" id="btn-save">保 存</button>
+      <button class="btn btn-cancel" id="btn-cancel">取 消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 导出报表弹窗 ==================== -->
+<div id="export-mask" class="mask" style="display:none">
+  <div class="sheet">
+    <div class="sheet-title">统计报表</div>
+    <div class="sheet-body"><textarea id="export-content" readonly></textarea></div>
+    <div class="btn-row sheet-btn-row">
+      <button class="btn btn-save" id="btn-copy">复制内容</button>
+      <button class="btn btn-export" id="btn-download">下载 txt</button>
+      <button class="btn btn-cancel" id="btn-export-close">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 通用消息弹窗 ==================== -->
+<div id="msg-mask" class="mask msg-center" style="display:none">
+  <div class="msg-box">
+    <div id="msg-title" class="msg-title"></div>
+    <div id="msg-content" class="msg-content"></div>
+    <div class="btn-row sheet-btn-row">
+      <button id="msg-cancel" class="btn btn-cancel" style="display:none">取 消</button>
+      <button id="msg-ok" class="btn btn-primary">确 定</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
