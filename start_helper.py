@@ -164,6 +164,17 @@ if __name__ == '__main__':
     print('=' * 52)
     print('    手机远程启动助手 (端口 {})'.format(HELPER_PORT))
     print('=' * 52)
+
+    # 启动后自动确保 MySQL 与后端处于运行状态（已运行则跳过）
+    if not port_open(MYSQL_PORT):
+        print('  检测到 MySQL 未运行，正在启动...')
+        ok, msg = start_mysql_service()
+        print(' ', msg)
+    if not port_open(BACKEND_PORT):
+        print('  检测到后端未运行，正在启动...')
+        ok, msg = start_backend()
+        print(' ', msg)
+
     print('  手机访问: http://{}:{}/status'.format(get_lan_ip(), HELPER_PORT))
     print('            http://{}:{}/start'.format(get_lan_ip(), HELPER_PORT))
     print('  MySQL 服务名: {}'.format(MYSQL_SERVICE))
