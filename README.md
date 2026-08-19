@@ -175,3 +175,35 @@ git push https://<你的用户名>:<token>@github.com/你的用户名/sjkglxt.gi
 ```
 
 > ⚠️ token 等同密码，切勿提交到代码仓库或分享给他人。
+
+
+---
+
+## 九、发布新版本（下载页自动更新）
+
+> 下载页 [https://1rc2.github.io/](https://1rc2.github.io/) 会自动读取本仓库的 **GitHub Releases**，
+> 不需要改网页代码，发布新版本只需按下面 3 步操作。
+
+### 发布新版本需要准备什么
+
+| 需要 | 说明 |
+|------|------|
+| 新版 APK 安装包 | 先按「六、打包成安卓 APK」打包好，文件名后缀必须是 `.apk` |
+| 版本号（Tag） | 如 `v1.1.0`，建议遵循 `v主版本.次版本.修订号` |
+| 更新说明 | 本次改了什么、修了什么，写进 Release 的说明框里 |
+
+### 发布 3 步操作
+
+1. 打开 GitHub 仓库的 **Releases** 页：`https://github.com/1rc2/sjkglxt/releases`
+2. 点击 **Draft a new release**（创建新发布）：
+   - Choose a tag：填新版本号（如 `v1.1.0`），点 **Create new tag**
+   - Release title：填版本名（如 `v1.1.0`）
+   - Describe this release：填写本次更新说明
+3. 拖入或上传 **新版 APK 文件**，确认后点 **Publish release**（发布）
+
+### 注意事项
+
+- ⚠️ 发布时**不要勾选** 「Set as a pre-release」；
+- ⚠️ APK 文件名后缀必须是 `.apk`，否则下载页识别不到；
+- 发布成功后，下载页约 **1~10 分钟内**自动显示新版本按钮，用户直接点即可下载；
+- 每次新版本都这样做，旧版本会保留在下载页「历史版本」里。
