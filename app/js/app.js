@@ -108,7 +108,7 @@ function doLogin() {
   postJSON('/api/login', { username: u, password: p }).then(function (res) {
     if (res.ok) {
       state.username = u;
-      enterMain();
+      checkHealthAndEnter();
     } else if (res.msg.indexOf('无法连接服务器') === 0) {
       $('login-msg').textContent = '无法连接后端，请先点下方"启动电脑服务"（需电脑开机且与手机同一Wi-Fi）';
     } else {
@@ -116,6 +116,23 @@ function doLogin() {
       $('login-pass').value = '';
       $('login-pass').focus();
     }
+  });
+}
+
+/* 登录后先检测数据库是否可用，避免进入界面后才发现连接失败 */
+function checkHealthAndEnter() {
+  api('/api/health').then(function (res) {
+    if (res.db) {
+      enterMain();
+      return;
+    }
+    var reason = (res.msg && res.msg.indexOf('无法连接服务器') !== 0) ? res.msg
+               : 'MySQL 未启动或数据库未初始化';
+    showMsg('数据库连接失败',
+      reason + '\n\n请点击下方"启动电脑服务"尝试自动修复；\n若仍失败，请在电脑上检查 MySQL 是否已启动。',
+      function () {
+        showStartServiceStatus('数据库连接失败：' + reason, '#e74c3c');
+      });
   });
 }
 
@@ -136,22 +153,31 @@ function startComputerService(onDone) {
   }
   showStartServiceStatus('正在请求电脑启动服务...', '#1a6fb5');
   apiRaw(HELPER_BASE, '/start', 10000).then(function (res) {
-    if (!res.ok) {
+    /* /start 返回 202 + {ok:true}；res 可能无 ok（低版本助手），按已提交处理 */
+    if (res.ok === false) {
       showStartServiceStatus('请求失败：无法连接电脑助手(' + HELPER_BASE + ')，请确认电脑已开机且助手在运行。', '#e74c3c');
       if (onDone) onDone(false);
       return;
     }
-    /* 轮询等待后端就绪（最多 30 秒） */
+    /* 轮询等待全部就绪：后端 + MySQL + 数据库可连（最多 40 秒） */
     var tries = 0;
     var timer = setInterval(function () {
       apiRaw(HELPER_BASE, '/status', 5000).then(function (st) {
-        if (st.ok && st.backend && st.mysql) {
+        var mysqlOk = st.mysql === true;
+        var backendOk = st.backend === true;
+        var dbOk = st.db === true;
+        if (backendOk && mysqlOk && dbOk) {
           clearInterval(timer);
           showStartServiceStatus('启动成功！正在重新登录...', '#28b463');
           if (onDone) onDone(true);
-        } else if (++tries >= 15) {
+        } else if (++tries >= 20) {
           clearInterval(timer);
-          showStartServiceStatus('等待超时，请稍后在电脑上检查 MySQL/后端状态。', '#e74c3c');
+          var reason = st.db_msg || '';
+          showStartServiceStatus(
+            '等待超时。当前状态：后端' + (backendOk ? '正常' : '未就绪') +
+            '，MySQL' + (mysqlOk ? '正常' : '未就绪') +
+            '，数据库' + (dbOk ? '正常' : '失败' + (reason ? '（' + reason + '）' : '')) +
+            '。请到电脑上检查。', '#e74c3c');
           if (onDone) onDone(false);
         }
       });

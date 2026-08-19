@@ -115,9 +115,30 @@ def stop_backend():
 # ---------------------------------------------------------------------------
 @app.route('/status')
 def status():
+    """状态检测：MySQL 端口 / 后端端口 / 数据库真实连接"""
+    db_ok = False
+    db_msg = ''
+    try:
+        if port_open(MYSQL_PORT):
+            import sys as _sys
+            if BASE_DIR not in _sys.path:
+                _sys.path.insert(0, BASE_DIR)
+            import db as dbmod
+            try:
+                db_ok = dbmod.Database().query_one('SELECT 1') is not None
+                db_msg = '数据库连接正常' if db_ok else '数据库连接失败'
+            except Exception as e:
+                db_msg = '数据库连接失败：{}'.format(e)
+        else:
+            db_msg = 'MySQL 未运行'
+    except Exception as e:
+        db_msg = '数据库检测异常：{}'.format(e)
     return jsonify({
+        'ok': True,
         'mysql': port_open(MYSQL_PORT),
         'backend': port_open(BACKEND_PORT),
+        'db': db_ok,
+        'db_msg': db_msg,
         'helper': True,
     })
 
