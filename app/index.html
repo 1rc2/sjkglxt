@@ -17,9 +17,10 @@
       <input id="login-pass" type="password" placeholder="请输入密码" autocomplete="current-password">
     </div>
     <div class="login-tip">默认账号: admin    默认密码: admin123</div>
-    <div class="login-setup"><a id="btn-server-set" href="javascript:void(0)">⚙ 服务器设置</a></div>
+    <div class="login-setup"><a id="btn-server-set" href="javascript:void(0)">⚙ 服务器设置</a>　|　<a id="btn-start-service" href="javascript:void(0)">🖥 启动电脑服务</a></div>
     <button id="login-btn" class="btn btn-primary btn-block">登 录</button>
     <div id="login-msg" class="login-msg"></div>
+    <div id="start-service-status" class="login-msg" style="color:#28b463;display:none"></div>
   </div>
 </div>
 
@@ -120,7 +121,7 @@
     <div id="config-title" class="msg-title">服务器设置</div>
     <div class="msg-content" style="margin-bottom:8px">请填写后端服务器地址（电脑运行 python server.py 后显示的地址），例如：</div>
     <input id="server-input" type="text" placeholder="http://192.168.1.100:5000">
-    <div class="login-setup"><a id="btn-config-default" href="javascript:void(0)">↩ 使用默认地址</a></div>
+    <div class="login-setup"><a id="btn-config-default" href="javascript:void(0)">↩ 使用默认地址</a>　|　<a id="btn-config-start" href="javascript:void(0)">🖥 启动电脑服务</a></div>
     <div class="btn-row sheet-btn-row">
       <button id="btn-config-cancel" class="btn btn-cancel">取 消</button>
       <button id="btn-config-save" class="btn btn-primary">保 存</button>
