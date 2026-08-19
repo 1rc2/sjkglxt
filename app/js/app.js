@@ -799,6 +799,11 @@ $('btn-config-cancel').addEventListener('click', function () {
   $('config-mask').style.display = 'none';
 });
 $('btn-config-save').addEventListener('click', saveServerConfig);
+$('btn-config-default').addEventListener('click', function () {
+  var d = window.__API_BASE__ || '';
+  if (!d) { showMsg('提示', '本安装包未内置默认地址，请手动输入'); return; }
+  $('server-input').value = d;
+});
 $('server-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') saveServerConfig();
 });
