@@ -27,6 +27,17 @@ Copy-Item "$PSScriptRoot\AndroidManifest.xml" $ws -Force
 Copy-Item "$PSScriptRoot\src" $ws -Recurse -Force
 Copy-Item "$PSScriptRoot\icon_char.txt" $ws -Force
 
+# ---- 1.5 Generate default server config (built-in default address) ----
+# Auto-detect current LAN IP and write assets/config.js so the app works
+# out of the box. User can still change it later inside the app.
+$lanIp = & python -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()"
+if ($LASTEXITCODE -ne 0 -or -not $lanIp) { $lanIp = '127.0.0.1' }
+$defaultApi = 'http://' + $lanIp + ':5000'
+[System.IO.File]::WriteAllText("$ws\assets\config.js",
+    "window.__API_BASE__ = '" + $defaultApi + "';",
+    (New-Object System.Text.UTF8Encoding $false))
+Write-Host "     default server: $defaultApi"
+
 # ---- 2. Generate launcher icon ----
 Write-Host '[2/8] Generate icon ...'
 Add-Type -AssemblyName System.Drawing

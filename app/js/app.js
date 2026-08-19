@@ -27,7 +27,8 @@ var API_BASE = '';
 (function () {
   var saved = '';
   try { saved = localStorage.getItem('api_base') || ''; } catch (e) {}
-  if (window.__API_BASE__) saved = window.__API_BASE__;
+  /* 用户自定义地址优先；未设置时使用打包内置的默认地址(config.js) */
+  if (!saved && window.__API_BASE__) saved = window.__API_BASE__;
   API_BASE = saved.replace(/\/+$/, '');
 })();
 
