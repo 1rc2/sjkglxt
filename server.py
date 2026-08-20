@@ -33,7 +33,7 @@ app = Flask(__name__, static_folder='app', static_url_path='')
 # ---------------------------------------------------------------------------
 LOGIN_USER = 'admin'
 LOGIN_PASS = 'admin123'
-MIN_YEAR, MAX_YEAR = 2000, 2026
+MIN_YEAR, MAX_YEAR = 2000, datetime.date.today().year + 1
 
 DB = Database()  # 单例
 
@@ -458,12 +458,16 @@ def api_search():
     if table not in TABLE_META:
         return jsonify({'ok': False, 'msg': '未知数据表：{}'.format(table)})
 
+    # 白名单：只允许 SEARCH_FIELDS 中定义的字段表达式，防止 SQL 注入
+    valid_exprs = {e for e, _ in SEARCH_FIELDS.get(table, [])}
     conditions, params = [], []
     for c in conds:
         expr = str(c.get('expr') or '').strip()
         value = str(c.get('value') or '').strip()
         if not expr or not value:
             continue
+        if expr not in valid_exprs:
+            continue  # 非法字段名，直接跳过
         op = c.get('op') or '='
         if op == '=':
             conditions.append('{} = %s'.format(expr))
@@ -649,4 +653,4 @@ if __name__ == '__main__':
         print('    请先启动 MySQL，并执行 python db.py 完成建库初始化')
         print('    {}'.format(e))
     print('=' * 52)
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=False)

@@ -28,10 +28,23 @@ Copy-Item "$PSScriptRoot\src" $ws -Recurse -Force
 Copy-Item "$PSScriptRoot\icon_char.txt" $ws -Force
 
 # ---- 1.5 Generate default server config (built-in default address) ----
-# Auto-detect current LAN IP and write assets/config.js so the app works
-# out of the box. User can still change it later inside the app.
-$lanIp = & python -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()"
-if ($LASTEXITCODE -ne 0 -or -not $lanIp) { $lanIp = '127.0.0.1' }
+# Auto-detect current LAN IP, preferring real WiFi/Ethernet over virtual
+# interfaces (WSL/Docker typically use 172.x.x.x). User can still change later.
+$lanIp = ''
+try {
+    $netIp = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.IPAddress -notmatch '^127\.|^169\.254\.|^172\.' -and
+            $_.PrefixOrigin -ne 'WellKnown'
+        } |
+        Sort-Object InterfaceAlias |
+        Select-Object -First 1 -ExpandProperty IPAddress
+    if ($netIp) { $lanIp = $netIp }
+} catch {}
+if (-not $lanIp) {
+    $lanIp = & python -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()"
+    if ($LASTEXITCODE -ne 0 -or -not $lanIp) { $lanIp = '127.0.0.1' }
+}
 $defaultApi    = 'http://' + $lanIp + ':5000'
 $defaultHelper = 'http://' + $lanIp + ':5001'
 [System.IO.File]::WriteAllText("$ws\assets\config.js",

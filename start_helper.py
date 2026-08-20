@@ -108,23 +108,21 @@ def start_backend():
         if port_open(BACKEND_PORT):
             return True, '后端启动成功'
         time.sleep(0.5)
-    return True, '后端启动命令已执行，等待端口就绪'
+    return False, '后端 15 秒内未就绪，请检查 server.py 是否报错'
 
 
 def stop_backend():
+    """停止后端进程（仅终止本助手启动的子进程，不误杀同端口其他程序）"""
     global _backend_proc
     killed = False
     if _backend_proc is not None and _backend_proc.poll() is None:
         _backend_proc.terminate()
+        try:
+            _backend_proc.wait(timeout=5)
+        except Exception:
+            _backend_proc.kill()
         killed = True
-    # 兜底：按端口找到对应进程结束
-    if port_open(BACKEND_PORT):
-        subprocess.run(
-            ['powershell', '-Command',
-             'Get-NetTCPConnection -LocalPort {} | Select-Object -ExpandProperty OwningProcess | '
-             'Sort-Object -Unique | ForEach-Object {{ Stop-Process -Id $_ -Force }}'.format(BACKEND_PORT)],
-            capture_output=True)
-        killed = True
+    _backend_proc = None
     return killed
 
 

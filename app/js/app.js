@@ -111,7 +111,7 @@ function doLogin() {
     if (res.ok) {
       state.username = u;
       checkHealthAndEnter();
-    } else if (res.msg.indexOf('无法连接服务器') === 0) {
+    } else if (res.msg && res.msg.indexOf('无法连接服务器') === 0) {
       $('login-msg').textContent = '无法连接后端，请先点下方"启动电脑服务"（需电脑开机且与手机同一Wi-Fi）';
     } else {
       $('login-msg').textContent = res.msg;
@@ -215,8 +215,10 @@ function openServerConfig() {
 function saveServerConfig() {
   var v = $('server-input').value.trim().replace(/\/+$/, '');
   if (!v) { showMsg('提示', '请输入服务器地址！'); return; }
+  /* 缺省 http:// 前缀时自动补全 */
+  if (!/^https?:\/\//.test(v)) v = 'http://' + v;
   /* 缺省端口时自动补 5000（后端默认端口） */
-  if (!/:\d+$/.test(v)) v = v + ':5000';
+  if (!/:\d+(\/|$)/.test(v)) v = v + ':5000';
   API_BASE = v;
   /* 同步助手地址（端口 5000->5001） */
   if (!window.__HELPER_BASE__) HELPER_BASE = v.replace(/:\d+$/, ':5001');
@@ -577,7 +579,7 @@ function createControl(meta, ff, record) {
       c = document.createElement('input');
       c.type = 'number';
       c.min = 2000;
-      c.max = 2026;
+      c.max = new Date().getFullYear() + 1;
       break;
     case 'depart':
       c = makeSelect((formOptionsCache.depart || []).map(function (o) {
@@ -656,7 +658,7 @@ function collectForm() {
       if (val && !/^\d{11}$/.test(val)) { showMsg('输入错误', '联系电话必须为11位数字！'); return null; }
     } else if (ff.type === 'year') {
       var y = parseInt(val, 10);
-      if (isNaN(y) || y < 2000 || y > 2026) { showMsg('输入错误', label + '必须在2000~2026之间！'); return null; }
+      if (isNaN(y) || y < 2000 || y > new Date().getFullYear() + 1) { showMsg('输入错误', label + '年份超出有效范围！'); return null; }
     } else if (ff.type === 'gender' || ff.type === 'level' || ff.type === 'rank' ||
                ff.type === 'depart' || ff.type === 'com_select' ||
                ff.type === 'award_select') {
