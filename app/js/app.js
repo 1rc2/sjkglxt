@@ -34,10 +34,30 @@ var API_BASE = '';
 
 function $(id) { return document.getElementById(id); }
 
-/* 网络异常时统一转为可读错误，前端各处只需判断 res.ok */
+/* 网络异常/超时时统一转为可读错误，前端各处只需判断 res.ok */
+var REQUEST_TIMEOUT = 8000;  // 8 秒超时，避免后端不可达时一直等待
 function api(url, options) {
-  return fetch(API_BASE + url, options).then(function (r) { return r.json(); })
-    .catch(function () { return { ok: false, msg: '无法连接服务器，请确认后端已启动！' }; });
+  options = options || {};
+  var timer = null;
+  var ctrl = null;
+  /* AbortController 不支持的旧 WebView 降级为普通请求（无超时） */
+  if (typeof AbortController !== 'undefined') {
+    ctrl = new AbortController();
+    timer = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT);
+    options.signal = ctrl.signal;
+  }
+  return fetch(API_BASE + url, options)
+    .then(function (r) { return r.json(); })
+    .catch(function (err) {
+      var timedOut = ctrl && err && err.name === 'AbortError';
+      return {
+        ok: false,
+        msg: timedOut
+          ? '连接服务器超时，请检查服务器地址和网络！'
+          : '无法连接服务器，请确认后端已启动！'
+      };
+    })
+    .then(function (res) { if (timer) clearTimeout(timer); return res; });
 }
 
 function postJSON(url, data) {
@@ -94,6 +114,8 @@ function doLogin() {
       checkHealthAndEnter();
     } else if (res.msg && res.msg.indexOf('无法连接服务器') === 0) {
       $('login-msg').textContent = '无法连接后端，请确认电脑已开机并运行 server.py，且手机与电脑在同一Wi-Fi';
+    } else if (res.msg && res.msg.indexOf('连接服务器超时') === 0) {
+      $('login-msg').textContent = '连接服务器超时，请检查服务器地址是否正确（可在"服务器设置"中修改）';
     } else {
       $('login-msg').textContent = res.msg;
       $('login-pass').value = '';

@@ -45,13 +45,11 @@ if (-not $lanIp) {
     $lanIp = & python -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()"
     if ($LASTEXITCODE -ne 0 -or -not $lanIp) { $lanIp = '127.0.0.1' }
 }
-$defaultApi    = 'http://' + $lanIp + ':5000'
-$defaultHelper = 'http://' + $lanIp + ':5001'
+$defaultApi = 'http://' + $lanIp + ':5000'
 [System.IO.File]::WriteAllText("$ws\assets\config.js",
-    "window.__API_BASE__ = '" + $defaultApi + "';" +
-    "window.__HELPER_BASE__ = '" + $defaultHelper + "';",
+    "window.__API_BASE__ = '" + $defaultApi + "';",
     (New-Object System.Text.UTF8Encoding $false))
-Write-Host "     default server: $defaultApi  helper: $defaultHelper"
+Write-Host "     default server: $defaultApi"
 
 # ---- 2. Generate launcher icon ----
 Write-Host '[2/8] Generate icon ...'
