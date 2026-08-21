@@ -22,20 +22,14 @@ var formOptionsCache = {};  // 下拉选项缓存: depart/student/competition/aw
    服务器地址配置
    - 浏览器直接访问后端(http://IP:5000)：API_BASE 为空，同源访问
    - APK 内嵌页面(file://)：首次启动弹出配置框，地址保存在 localStorage
-   助手地址 HELPER_BASE(5001)：用于"启动电脑服务"，从配置自动推导
    ========================================================================== */
 var API_BASE = '';
-var HELPER_BASE = '';
 (function () {
   var saved = '';
   try { saved = localStorage.getItem('api_base') || ''; } catch (e) {}
   /* 用户自定义地址优先；未设置时使用打包内置的默认地址(config.js) */
   if (!saved && window.__API_BASE__) saved = window.__API_BASE__;
   API_BASE = saved.replace(/\/+$/, '');
-  /* 助手地址：优先内置，否则从 API 地址推导端口 5000->5001 */
-  var hp = (window.__HELPER_BASE__ || '').replace(/\/+$/, '');
-  if (!hp && API_BASE) hp = API_BASE.replace(/:\d+$/, ':5001');
-  HELPER_BASE = hp;
 })();
 
 function $(id) { return document.getElementById(id); }
@@ -44,18 +38,6 @@ function $(id) { return document.getElementById(id); }
 function api(url, options) {
   return fetch(API_BASE + url, options).then(function (r) { return r.json(); })
     .catch(function () { return { ok: false, msg: '无法连接服务器，请确认后端已启动！' }; });
-}
-
-function apiRaw(base, url, timeoutMs) {
-  /* 直连指定地址（如助手 5001），带超时（兼容旧版 WebView，不用 finally） */
-  /* 部分旧 WebView 不支持 AbortController，此时退化为无超时请求 */
-  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-  var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, timeoutMs || 6000);
-  var opts = ctrl ? { signal: ctrl.signal } : {};
-  return fetch(base + url, opts)
-    .then(function (r) { clearTimeout(timer); return r.json(); })
-    .then(function (j) { return j; })
-    .catch(function () { clearTimeout(timer); return { ok: false }; });
 }
 
 function postJSON(url, data) {
@@ -105,14 +87,13 @@ function doLogin() {
   var u = $('login-user').value.trim();
   var p = $('login-pass').value;
   $('login-msg').textContent = '';
-  $('start-service-status').style.display = 'none';
   if (!u || !p) { $('login-msg').textContent = '用户名和密码不能为空！'; return; }
   postJSON('/api/login', { username: u, password: p }).then(function (res) {
     if (res.ok) {
       state.username = u;
       checkHealthAndEnter();
     } else if (res.msg && res.msg.indexOf('无法连接服务器') === 0) {
-      $('login-msg').textContent = '无法连接后端，请先点下方"启动电脑服务"（需电脑开机且与手机同一Wi-Fi）';
+      $('login-msg').textContent = '无法连接后端，请确认电脑已开机并运行 server.py，且手机与电脑在同一Wi-Fi';
     } else {
       $('login-msg').textContent = res.msg;
       $('login-pass').value = '';
@@ -131,82 +112,13 @@ function checkHealthAndEnter() {
     var reason = (res.msg && res.msg.indexOf('无法连接服务器') !== 0) ? res.msg
                : 'MySQL 未启动或数据库未初始化';
     showMsg('数据库连接失败',
-      reason + '\n\n请点击下方"启动电脑服务"尝试自动修复；\n若仍失败，请在电脑上检查 MySQL 是否已启动。',
-      function () {
-        showStartServiceStatus('数据库连接失败：' + reason, '#e74c3c');
-      });
+      reason + '\n\n请在电脑上检查：\n1. MySQL 服务是否已启动\n2. 是否已执行 python db.py 完成建库初始化');
   });
 }
 
 /* ==========================================================================
-   启动电脑服务：请求电脑上的助手(5001) 拉起 MySQL + 后端
+   服务器地址配置弹窗
    ========================================================================== */
-function showStartServiceStatus(text, color) {
-  var el = $('start-service-status');
-  el.textContent = text;
-  el.style.color = color || '#28b463';
-  el.style.display = 'block';
-}
-
-function startComputerService(onDone) {
-  if (!HELPER_BASE) {
-    $('login-msg').textContent = '未配置助手地址，请先进入"服务器设置"填写后端地址。';
-    return;
-  }
-  showStartServiceStatus('正在请求电脑启动服务...', '#1a6fb5');
-  apiRaw(HELPER_BASE, '/start', 10000).then(function (res) {
-    /* /start 返回 202 + {ok:true}；res 可能无 ok（低版本助手），按已提交处理 */
-    if (res.ok === false) {
-      showStartServiceStatus('请求失败：无法连接电脑助手(' + HELPER_BASE + ')，请确认电脑已开机且助手在运行。', '#e74c3c');
-      if (onDone) onDone(false);
-      return;
-    }
-    /* 轮询等待全部就绪：后端 + MySQL + 数据库可连（最多 40 秒） */
-    var tries = 0;
-    var timer = setInterval(function () {
-      apiRaw(HELPER_BASE, '/status', 5000).then(function (st) {
-        /* 请求失败（如 CORS/网络不通）时立即提示，避免空等 40 秒 */
-        if (!st || st.ok === false) {
-          clearInterval(timer);
-          showStartServiceStatus('无法连接电脑助手，请确认电脑已开机、助手已启动，且手机与电脑在同一Wi-Fi。', '#e74c3c');
-          if (onDone) onDone(false);
-          return;
-        }
-        var mysqlOk = st.mysql === true;
-        var backendOk = st.backend === true;
-        var dbOk = st.db === true;
-        if (backendOk && mysqlOk && dbOk) {
-          clearInterval(timer);
-          showStartServiceStatus('启动成功！正在重新登录...', '#28b463');
-          if (onDone) onDone(true);
-        } else if (++tries >= 20) {
-          clearInterval(timer);
-          var reason = st.db_msg || '';
-          showStartServiceStatus(
-            '等待超时。当前状态：后端' + (backendOk ? '正常' : '未就绪') +
-            '，MySQL' + (mysqlOk ? '正常' : '未就绪') +
-            '，数据库' + (dbOk ? '正常' : '失败' + (reason ? '（' + reason + '）' : '')) +
-            '。请到电脑上检查。', '#e74c3c');
-          if (onDone) onDone(false);
-        }
-      });
-    }, 2000);
-  });
-}
-
-/* 登录页"启动电脑服务"与设置弹窗按钮统一绑定 */
-function bindStartService() {
-  var run = function () {
-    $('config-mask').style.display = 'none';
-    startComputerService(function (ok) {
-      if (ok) doLogin();
-    });
-  };
-  $('btn-start-service').addEventListener('click', run);
-  $('btn-config-start').addEventListener('click', run);
-}
-
-/* 服务器地址配置弹窗 */
 function openServerConfig() {
   $('server-input').value = API_BASE || '';
   $('config-mask').style.display = 'flex';
@@ -220,8 +132,6 @@ function saveServerConfig() {
   /* 缺省端口时自动补 5000（后端默认端口） */
   if (!/:\d+(\/|$)/.test(v)) v = v + ':5000';
   API_BASE = v;
-  /* 同步助手地址（端口 5000->5001） */
-  if (!window.__HELPER_BASE__) HELPER_BASE = v.replace(/:\d+$/, ':5001');
   try { localStorage.setItem('api_base', v); } catch (e) {}
   $('config-mask').style.display = 'none';
   showMsg('已保存', '服务器地址已保存：' + v);
@@ -931,9 +841,6 @@ $('btn-config-default').addEventListener('click', function () {
 $('server-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') saveServerConfig();
 });
-
-/* 绑定"启动电脑服务"按钮 */
-bindStartService();
 
 /* APK 内嵌模式（file://）且未配置过服务器地址时，弹出配置框 */
 window.addEventListener('load', function () {
