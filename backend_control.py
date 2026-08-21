@@ -6,11 +6,13 @@ import sys
 import time
 import socket
 
-# Windows cmd 默认 GBK 代码页，强制 Python 用 GBK 输出避免中文乱码
+# 跟随控制台代码页输出，避免中文乱码（bat 已 chcp 65001）
 if sys.platform == 'win32':
     try:
-        sys.stdout.reconfigure(encoding='gbk', errors='replace')
-        sys.stdin.reconfigure(encoding='gbk', errors='replace')
+        import ctypes
+        cp = ctypes.windll.kernel32.GetConsoleOutputCP()
+        sys.stdout.reconfigure(encoding='utf-8' if cp == 65001 else 'gbk', errors='replace')
+        sys.stdin.reconfigure(encoding='utf-8' if cp == 65001 else 'gbk', errors='replace')
     except Exception:
         pass
 
