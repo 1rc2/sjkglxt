@@ -34,7 +34,7 @@ app = Flask(__name__, static_folder='app', static_url_path='')
 # ---------------------------------------------------------------------------
 LOGIN_USER = 'admin'
 LOGIN_PASS = 'admin123'
-APP_VERSION = 'v1.1.7'  # 当前版本号（发布新版本时同步更新）
+APP_VERSION = 'v1.1.8'  # 当前版本号（发布新版本时同步更新）
 MIN_YEAR, MAX_YEAR = 2000, datetime.date.today().year + 1
 
 # ---------------------------------------------------------------------------

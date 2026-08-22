@@ -122,10 +122,17 @@ thead th {
   background: #eaf1f8; color: #1a5276; padding: 9px 10px; white-space: nowrap;
   font-weight: bold; border-bottom: 2px solid #d4e0ec; position: sticky; top: 0;
 }
-/* 单元格允许换行：长文本（竞赛名称/指导教师等）不被截断，表格宽度自然收敛 */
+/* 单元格默认不换行，保持紧凑 */
 tbody td {
-  padding: 8px 10px; text-align: center; white-space: normal; word-break: break-word;
+  padding: 7px 6px; text-align: center; white-space: nowrap;
   border-top: 1px solid #eef2f6;
+}
+/* 长文本列（姓名/竞赛名称/奖项名称/指导教师/院系名）限宽自动换行，内容完整显示 */
+tbody td:nth-child(3),
+tbody td:nth-child(4),
+tbody td:nth-child(6),
+tbody td:nth-child(8) {
+  white-space: normal; word-break: break-all; max-width: 95px;
 }
 tbody tr:nth-child(even) { background: #f8fafc; }
 tbody tr.selected { background: #d4e6f1; }
