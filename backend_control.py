@@ -21,12 +21,6 @@ SERVER_PY = os.path.join(SCRIPT_DIR, 'server.py')
 LOG_FILE = os.path.join(SCRIPT_DIR, 'server.log')
 PORT = 5000
 
-# 开机自启动：Windows 启动文件夹 + 隐藏窗口的 VBS 启动脚本
-STARTUP_DIR = os.path.join(
-    os.environ.get('APPDATA', ''),
-    r'Microsoft\Windows\Start Menu\Programs\Startup')
-STARTUP_VBS = os.path.join(STARTUP_DIR, 'start_backend.vbs')
-
 
 def is_port_listening(port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -101,44 +95,8 @@ def show_menu():
     print('   [1] 启动后端')
     print('   [2] 关闭后端')
     print('   [3] 查看状态')
-    print('   [4] 设置开机自启动')
-    print('   [5] 取消开机自启动')
     print('   [0] 退出')
     print('=' * 35)
-
-
-def setup_autostart():
-    """设置开机自启动：启动文件夹放一个隐藏窗口的 VBS，开机自动运行后端"""
-    if os.path.exists(STARTUP_VBS):
-        print('\n  [提示] 开机自启动已设置，无需重复操作')
-        pause()
-        return
-    # 隐藏窗口后台运行 python server.py（server.py 自带端口占用预检，重复启动安全）
-    cmd = '"{}" "{}"'.format(PYTHON.replace('"', '""'), SERVER_PY.replace('"', '""'))
-    vbs = 'Set ws = CreateObject("Wscript.Shell")\r\nws.Run "{}", 0, False\r\n'.format(cmd)
-    try:
-        os.makedirs(STARTUP_DIR, exist_ok=True)
-        with open(STARTUP_VBS, 'w', encoding='gbk') as f:
-            f.write(vbs)
-        print('\n  [完成] 已设置开机自启动')
-        print('        电脑开机后将自动后台运行后端（无窗口）')
-        print('        文件位置: {}'.format(STARTUP_VBS))
-    except Exception as e:
-        print('\n  [失败] 设置开机自启动失败: {}'.format(e))
-    pause()
-
-
-def cancel_autostart():
-    """取消开机自启动"""
-    try:
-        if os.path.exists(STARTUP_VBS):
-            os.remove(STARTUP_VBS)
-            print('\n  [完成] 已取消开机自启动')
-        else:
-            print('\n  [提示] 当前未设置开机自启动')
-    except Exception as e:
-        print('\n  [失败] 取消开机自启动失败: {}'.format(e))
-    pause()
 
 
 def do_start():
@@ -248,10 +206,6 @@ def main():
             do_stop()
         elif choice == '3':
             do_status()
-        elif choice == '4':
-            setup_autostart()
-        elif choice == '5':
-            cancel_autostart()
         elif choice == '0':
             break
         else:
