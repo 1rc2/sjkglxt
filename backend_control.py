@@ -6,7 +6,6 @@ import sys
 import time
 import socket
 
-# 跟随控制台代码页输出，避免中文乱码（bat 已 chcp 65001）
 if sys.platform == 'win32':
     try:
         import ctypes
@@ -19,11 +18,11 @@ if sys.platform == 'win32':
 PYTHON = r'D:\python\python.exe'
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SERVER_PY = os.path.join(SCRIPT_DIR, 'server.py')
+LOG_FILE = os.path.join(SCRIPT_DIR, 'server.log')
 PORT = 5000
 
 
 def is_port_listening(port):
-    """检测端口是否在监听"""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(0.5)
     try:
@@ -36,7 +35,6 @@ def is_port_listening(port):
 
 
 def get_pid_on_port(port):
-    """获取监听该端口的进程 PID"""
     try:
         r = subprocess.run(
             ['powershell', '-NoProfile', '-Command',
@@ -49,7 +47,6 @@ def get_pid_on_port(port):
 
 
 def is_mysql_running():
-    """检测 MySQL80 服务是否在运行"""
     try:
         r = subprocess.run(['sc', 'query', 'MySQL80'], capture_output=True, text=True, timeout=5)
         return 'RUNNING' in r.stdout.upper()
@@ -58,15 +55,12 @@ def is_mysql_running():
 
 
 def kill_pids(pids):
-    """结束指定 PID 的进程"""
     for pid in pids:
         try:
-            r = subprocess.run(['taskkill', '/F', '/PID', pid], capture_output=True, text=True, timeout=5)
-            print('  [调试] taskkill PID %s -> exit=%d out=%s' % (pid, r.returncode, r.stdout.strip()))
-            if r.returncode != 0:
-                print('  [调试] taskkill stderr=%s' % r.stderr.strip())
-        except Exception as e:
-            print('  [调试] taskkill exception: %s' % e)
+            subprocess.run(['taskkill', '/F', '/PID', pid],
+                           capture_output=True, text=True, timeout=5)
+        except Exception:
+            pass
 
 
 def clear():
@@ -94,22 +88,39 @@ def do_start():
         print('\n  [提示] 后端已在运行，无需重复启动')
         pause()
         return
-    if is_mysql_running():
-        print('\n  [提示] MySQL 已启动')
+    mysql_ok = is_mysql_running()
+    if mysql_ok:
+        print('\n  [OK]  MySQL 已启动')
     else:
-        print('\n  [提示] MySQL 未启动，请先在服务里启动 MySQL80')
-    print('  [提示] 正在启动后端...')
-    # 用新窗口启动，保持后端运行
+        print('\n  [警告] MySQL 未启动，请先在服务里启动 MySQL80')
+    print('  [提示] 正在启动后端（后台运行）...')
+
+    log_f = open(LOG_FILE, 'w', encoding='utf-8')
+    creation_flags = 0
+    if os.name == 'nt':
+        DETACHED_PROCESS = 0x00000008
+        creation_flags = DETACHED_PROCESS
     subprocess.Popen(
         [PYTHON, SERVER_PY],
         cwd=SCRIPT_DIR,
-        creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0
+        stdout=log_f,
+        stderr=subprocess.STDOUT,
+        creationflags=creation_flags if os.name == 'nt' else 0,
+        close_fds=True if os.name != 'nt' else False
     )
-    time.sleep(2)
+
+    for i in range(10):
+        time.sleep(0.5)
+        if is_port_listening(PORT):
+            break
+
     if is_port_listening(PORT):
+        ip = get_lan_ip()
         print('  [完成] 后端已启动')
+        if ip:
+            print('  手机访问: http://%s:%d' % (ip, PORT))
     else:
-        print('  [警告] 后端可能启动失败，请查看新窗口的报错信息')
+        print('  [失败] 后端启动失败，请查看日志: %s' % LOG_FILE)
     pause()
 
 
@@ -121,28 +132,42 @@ def do_stop():
             print('  [完成] 后端已关闭')
             pause()
             return
-        print('  [调试] 找到进程 PID: %s' % ', '.join(pids))
         kill_pids(pids)
-        time.sleep(2)
+        time.sleep(1.5)
         if not is_port_listening(PORT):
             print('  [完成] 后端已关闭')
             pause()
             return
-        print('  [调试] 第%d次尝试后端口仍占用，重试...' % (attempt + 1))
-    print('  [警告] 关闭失败，请手动在任务管理器结束 python.exe 进程')
+    print('  [失败] 关闭失败，请在任务管理器结束 python.exe 进程')
     pause()
 
 
 def do_status():
-    if is_port_listening(PORT):
-        print('\n  [状态] 后端运行中')
+    running = is_port_listening(PORT)
+    mysql = is_mysql_running()
+    print()
+    if running:
+        ip = get_lan_ip()
+        print('  [状态] 后端运行中')
+        if ip:
+            print('         手机访问: http://%s:%d' % (ip, PORT))
     else:
-        print('\n  [状态] 后端未运行')
-    if is_mysql_running():
-        print('  [状态] MySQL 已启动')
-    else:
-        print('  [状态] MySQL 未启动')
+        print('  [状态] 后端未运行')
+    print('  [状态] MySQL %s' % ('已启动' if mysql else '未启动'))
+    if not running and mysql:
+        print('  [提示] 可按 [1] 启动后端')
     pause()
+
+
+def get_lan_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return ''
 
 
 def main():
