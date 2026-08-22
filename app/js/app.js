@@ -887,8 +887,20 @@ $('server-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') saveServerConfig();
 });
 
+/* ==========================================================================
+   登录页显示后端版本号（从 /api/health 获取，单一来源）
+   ========================================================================== */
+function loadVersion() {
+  var el = $('app-version');
+  if (!el) return;
+  api('/api/health').then(function (res) {
+    el.textContent = (res && res.version) ? '后端版本 ' + res.version : '';
+  });
+}
+
 /* APK 内嵌模式（file://）且未配置过服务器地址时，弹出配置框 */
 window.addEventListener('load', function () {
+  loadVersion();
   if (!API_BASE && location.protocol === 'file:') {
     openServerConfig();
   }

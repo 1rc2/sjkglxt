@@ -50,6 +50,7 @@ input, select, textarea { font-family: inherit; }
 .login-form input:focus { border-color: #4e9acd; }
 .login-tip { color: #7f8c8d; font-size: 12px; text-align: center; margin-bottom: 16px; }
 .login-msg { color: #e74c3c; font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
+.app-version { color: #a0a8b0; font-size: 11px; text-align: center; margin-top: 10px; }
 .login-setup { text-align: center; margin-bottom: 12px; }
 .login-setup a { color: #4e9acd; font-size: 12px; text-decoration: none; }
 

@@ -34,6 +34,7 @@ app = Flask(__name__, static_folder='app', static_url_path='')
 # ---------------------------------------------------------------------------
 LOGIN_USER = 'admin'
 LOGIN_PASS = 'admin123'
+APP_VERSION = 'v1.1.4'  # 当前版本号（发布新版本时同步更新）
 MIN_YEAR, MAX_YEAR = 2000, datetime.date.today().year + 1
 
 # ---------------------------------------------------------------------------
@@ -629,10 +630,10 @@ def api_export():
 def api_health():
     try:
         DB.query_one('SELECT 1')
-        return jsonify({'ok': True, 'db': True})
+        return jsonify({'ok': True, 'db': True, 'version': APP_VERSION})
     except DatabaseError:
         # 数据库不可用时 ok=False，语义与 ok 字段一致，前端仍通过 db 字段判断
-        return jsonify({'ok': False, 'db': False,
+        return jsonify({'ok': False, 'db': False, 'version': APP_VERSION,
                         'msg': '数据库连接失败，请检查 MySQL 是否启动、db.py 配置是否正确，'
                                '并先执行 python db.py 完成建库初始化'})
 
