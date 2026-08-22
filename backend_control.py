@@ -47,9 +47,25 @@ def get_pid_on_port(port):
 
 
 def is_mysql_running():
+    """检测 MySQL 服务是否运行（自动识别 MySQL/MySQL80 等服务名，不写死）"""
     try:
-        r = subprocess.run(['sc', 'query', 'MySQL80'], capture_output=True, text=True, timeout=5)
-        return 'RUNNING' in r.stdout.upper()
+        # 先枚举系统里所有 MySQL 相关服务
+        r = subprocess.run(['sc', 'query', 'type=', 'service', 'state=', 'all'],
+                           capture_output=True, text=True, timeout=8)
+        svc_names = set()
+        for line in r.stdout.splitlines():
+            line = line.strip()
+            if line.upper().startswith('SERVICE_NAME:'):
+                svc_names.add(line.split(':', 1)[1].strip())
+        mysql_svcs = [s for s in svc_names if s.upper().startswith('MYSQL')]
+        if not mysql_svcs:
+            return False
+        # 任一 MySQL 服务处于 RUNNING 即认为已启动
+        for svc in mysql_svcs:
+            rr = subprocess.run(['sc', 'query', svc], capture_output=True, text=True, timeout=5)
+            if 'RUNNING' in rr.stdout.upper():
+                return True
+        return False
     except Exception:
         return False
 

@@ -631,7 +631,8 @@ def api_health():
         DB.query_one('SELECT 1')
         return jsonify({'ok': True, 'db': True})
     except DatabaseError:
-        return jsonify({'ok': True, 'db': False,
+        # 数据库不可用时 ok=False，语义与 ok 字段一致，前端仍通过 db 字段判断
+        return jsonify({'ok': False, 'db': False,
                         'msg': '数据库连接失败，请检查 MySQL 是否启动、db.py 配置是否正确，'
                                '并先执行 python db.py 完成建库初始化'})
 
@@ -643,7 +644,7 @@ def api_health():
 def add_cors_headers(resp):
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token'
     return resp
 
 
