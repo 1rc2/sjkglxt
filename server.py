@@ -34,7 +34,7 @@ app = Flask(__name__, static_folder='app', static_url_path='')
 # ---------------------------------------------------------------------------
 LOGIN_USER = 'admin'
 LOGIN_PASS = 'admin123'
-APP_VERSION = 'v1.1.4'  # 当前版本号（发布新版本时同步更新）
+APP_VERSION = 'v1.1.5'  # 当前版本号（发布新版本时同步更新）
 MIN_YEAR, MAX_YEAR = 2000, datetime.date.today().year + 1
 
 # ---------------------------------------------------------------------------
@@ -47,8 +47,8 @@ PUBLIC_PATHS = {'/api/login', '/api/logout', '/api/health', '/'}
 def _check_auth():
     """检查请求是否携带有效 token，未携带返回 None，携带且有效返回 True"""
     path = request.path
-    # 公开接口 + 静态资源（css/js/图片/图标等）无需鉴权，仅 /api/ 接口需要 token
-    if path in PUBLIC_PATHS or path.startswith('/app/') or not path.startswith('/api/'):
+    # 公开接口 + 静态资源（css/js/图片等非 /api/ 路径）无需鉴权，仅 /api/ 接口需要 token
+    if path in PUBLIC_PATHS or not path.startswith('/api/'):
         return True
     if request.method == 'OPTIONS':
         return True
@@ -624,7 +624,7 @@ def api_export():
 
 
 # ---------------------------------------------------------------------------
-# 8. 健康检查
+# 9. 健康检查
 # ---------------------------------------------------------------------------
 @app.route('/api/health')
 def api_health():
@@ -639,7 +639,7 @@ def api_health():
 
 
 # ---------------------------------------------------------------------------
-# 9. CORS 支持（APK 内嵌页面通过 file:// 跨源访问本 API）
+# 10. CORS 支持（APK 内嵌页面通过 file:// 跨源访问本 API）
 # ---------------------------------------------------------------------------
 @app.after_request
 def add_cors_headers(resp):
@@ -657,7 +657,7 @@ def handle_preflight():
 
 
 # ---------------------------------------------------------------------------
-# 10. 移动端界面入口
+# 11. 移动端界面入口
 # ---------------------------------------------------------------------------
 @app.route('/')
 def index():
@@ -695,4 +695,13 @@ if __name__ == '__main__':
         print('    请先启动 MySQL，并执行 python db.py 完成建库初始化')
         print('    {}'.format(e))
     print('=' * 52)
+    # 启动前检查端口占用，避免静默失败（进程存在但未监听）
+    try:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(('0.0.0.0', 5000))
+        probe.close()
+    except OSError:
+        print('  [错误] 端口 5000 已被其他程序占用！')
+        print('         请先关闭占用程序，或运行「后端控制.bat」选 [2] 关闭后端后重试')
+        raise SystemExit(1)
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=False)

@@ -108,7 +108,7 @@ def do_start():
     if mysql_ok:
         print('\n  [OK]  MySQL 已启动')
     else:
-        print('\n  [警告] MySQL 未启动，请先在服务里启动 MySQL80')
+        print('\n  [警告] MySQL 未启动，请先在 Windows 服务中启动 MySQL 服务')
     print('  [提示] 正在启动后端（后台运行）...')
 
     log_f = open(LOG_FILE, 'w', encoding='utf-8')
@@ -138,6 +138,15 @@ def do_start():
             print('  手机访问: http://%s:%d' % (ip, PORT))
     else:
         print('  [失败] 后端启动失败，请查看日志: %s' % LOG_FILE)
+        # 显示日志尾部，便于直接排查失败原因
+        try:
+            with open(LOG_FILE, 'r', encoding='utf-8', errors='replace') as lf:
+                tail = lf.read().strip().splitlines()[-6:]
+            print('  ---- server.log 最后几行 ----')
+            for ln in tail:
+                print('  | ' + ln)
+        except Exception:
+            pass
     pause()
 
 
