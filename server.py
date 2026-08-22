@@ -20,6 +20,7 @@
 ============================================================================
 """
 import datetime
+import secrets
 import socket
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -34,6 +35,32 @@ app = Flask(__name__, static_folder='app', static_url_path='')
 LOGIN_USER = 'admin'
 LOGIN_PASS = 'admin123'
 MIN_YEAR, MAX_YEAR = 2000, datetime.date.today().year + 1
+
+# ---------------------------------------------------------------------------
+# API 鉴权：内存级 token 校验，登录成功后发放，注销或重启服务后失效
+# ---------------------------------------------------------------------------
+ACTIVE_TOKENS = set()
+PUBLIC_PATHS = {'/api/login', '/api/logout', '/api/health', '/'}
+
+
+def _check_auth():
+    """检查请求是否携带有效 token，未携带返回 None，携带且有效返回 True"""
+    path = request.path
+    if path in PUBLIC_PATHS or path.startswith('/app/'):
+        return True
+    if request.method == 'OPTIONS':
+        return True
+    token = request.headers.get('X-Auth-Token', '') or request.args.get('token', '')
+    if token and token in ACTIVE_TOKENS:
+        return True
+    return None
+
+
+@app.before_request
+def auth_middleware():
+    result = _check_auth()
+    if result is None:
+        return jsonify({'ok': False, 'msg': '登录已过期，请重新登录！'}), 401
 
 DB = Database()  # 单例
 
@@ -306,8 +333,20 @@ def api_login():
     if not username or not password:
         return jsonify({'ok': False, 'msg': '用户名和密码不能为空！'})
     if username == LOGIN_USER and password == LOGIN_PASS:
-        return jsonify({'ok': True, 'username': username})
+        token = secrets.token_hex(16)
+        ACTIVE_TOKENS.add(token)
+        return jsonify({'ok': True, 'username': username, 'token': token})
     return jsonify({'ok': False, 'msg': '用户名或密码错误，请重新输入！'})
+
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    """注销：清除当前会话 token"""
+    body = request.get_json(silent=True) or {}
+    token = body.get('token', '') or request.headers.get('X-Auth-Token', '')
+    if token and token in ACTIVE_TOKENS:
+        ACTIVE_TOKENS.discard(token)
+    return jsonify({'ok': True})
 
 
 # ---------------------------------------------------------------------------
@@ -583,7 +622,7 @@ def api_export():
 
 
 # ---------------------------------------------------------------------------
-# 9. 健康检查
+# 8. 健康检查
 # ---------------------------------------------------------------------------
 @app.route('/api/health')
 def api_health():
@@ -597,7 +636,7 @@ def api_health():
 
 
 # ---------------------------------------------------------------------------
-# 9.5 CORS 支持（APK 内嵌页面通过 file:// 跨源访问本 API）
+# 9. CORS 支持（APK 内嵌页面通过 file:// 跨源访问本 API）
 # ---------------------------------------------------------------------------
 @app.after_request
 def add_cors_headers(resp):

@@ -35,19 +35,33 @@ var API_BASE = '';
 function $(id) { return document.getElementById(id); }
 
 /* 网络异常/超时时统一转为可读错误，前端各处只需判断 res.ok */
-var REQUEST_TIMEOUT = 8000;  // 8 秒超时，避免后端不可达时一直等待
+var REQUEST_TIMEOUT = 8000;
 function api(url, options) {
   options = options || {};
+  /* 附带 token 鉴权 */
+  var token = localStorage.getItem('sjk_token');
+  if (token) {
+    options.headers = options.headers || {};
+    options.headers['X-Auth-Token'] = token;
+  }
   var timer = null;
   var ctrl = null;
-  /* AbortController 不支持的旧 WebView 降级为普通请求（无超时） */
   if (typeof AbortController !== 'undefined') {
     ctrl = new AbortController();
     timer = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT);
     options.signal = ctrl.signal;
   }
   return fetch(API_BASE + url, options)
-    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      if (r.status === 401) {
+        localStorage.removeItem('sjk_token');
+        showMsg('登录已过期', '请重新登录！', function () {
+          location.reload();
+        });
+        return { ok: false, msg: '登录已过期', _expired: true };
+      }
+      return r.json();
+    })
     .catch(function (err) {
       var timedOut = ctrl && err && err.name === 'AbortError';
       return {
@@ -110,6 +124,7 @@ function doLogin() {
   if (!u || !p) { $('login-msg').textContent = '用户名和密码不能为空！'; return; }
   postJSON('/api/login', { username: u, password: p }).then(function (res) {
     if (res.ok) {
+      if (res.token) localStorage.setItem('sjk_token', res.token);
       state.username = u;
       checkHealthAndEnter();
     } else if (res.msg && res.msg.indexOf('无法连接服务器') === 0) {
@@ -160,7 +175,14 @@ function saveServerConfig() {
 }
 
 function enterMain() {
-  $('topbar').textContent = '👤 当前用户：' + state.username + '　|　欢迎使用大学生竞赛成果管理系统';
+  $('topbar').innerHTML = '👤 当前用户：' + state.username +
+    '　|　欢迎使用　<span id="btn-logout" style="float:right;cursor:pointer;color:#fff;text-decoration:underline;">退出</span>';
+  $('btn-logout').addEventListener('click', function () {
+    showConfirm('退出登录', '确定要退出登录吗？', function () {
+      localStorage.removeItem('sjk_token');
+      location.reload();
+    });
+  });
   $('login-screen').style.display = 'none';
   $('main-screen').style.display = 'flex';
   initMeta();
@@ -555,7 +577,7 @@ function createControl(meta, ff, record) {
       }
     }
   } else if (ff.type === 'year') {
-    c.value = '2024';
+    c.value = String(new Date().getFullYear());
   }
 
   /* 编辑时主键只读 */
@@ -600,7 +622,8 @@ function collectForm() {
       if (val.length > 100) { showMsg('输入错误', label + '长度不能超过100个字符！'); return null; }
     }
 
-    if (ff.field !== meta.pk) data[ff.field] = val;
+    /* 新增时包含主键（学号等用户输入的PK），编辑时跳过主键 */
+    if (!state.editing || ff.field !== meta.pk) data[ff.field] = val;
   }
   return data;
 }

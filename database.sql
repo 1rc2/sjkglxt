@@ -50,8 +50,8 @@ CREATE TABLE competition (
     hold_year INT          NOT NULL COMMENT '举办年份',
     -- 用户自定义完整性：级别仅允许三种
     CONSTRAINT chk_comp_level CHECK (level IN ('国家级', '省级', '校级')),
-    -- 用户自定义完整性：年份范围 2000~2026
-    CONSTRAINT chk_comp_year  CHECK (hold_year BETWEEN 2000 AND 2026),
+    -- 用户自定义完整性：年份范围 2000~2030
+    CONSTRAINT chk_comp_year  CHECK (hold_year BETWEEN 2000 AND 2030),
     -- 用户自定义完整性：数字字段不能为负数
     CONSTRAINT chk_comp_year_positive CHECK (hold_year >= 0)
 ) COMMENT '竞赛表';
@@ -75,8 +75,8 @@ CREATE TABLE record (
     award_id  INT        NOT NULL COMMENT '所获奖项编号(外键)',
     teacher   VARCHAR(50) NOT NULL COMMENT '指导教师(非空)',
     join_year INT        NOT NULL COMMENT '参赛年份',
-    -- 用户自定义完整性：年份范围 2000~2026
-    CONSTRAINT chk_record_year  CHECK (join_year BETWEEN 2000 AND 2026),
+    -- 用户自定义完整性：年份范围 2000~2030
+    CONSTRAINT chk_record_year  CHECK (join_year BETWEEN 2000 AND 2030),
     -- 用户自定义完整性：数字字段不能为负数
     CONSTRAINT chk_record_year_positive CHECK (join_year >= 0),
     -- 参照完整性：三条外键，数据库层面禁止非法外键插入

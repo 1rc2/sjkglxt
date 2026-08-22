@@ -15,7 +15,7 @@ if sys.platform == 'win32':
     except Exception:
         pass
 
-PYTHON = r'D:\python\python.exe'
+PYTHON = sys.executable if sys.executable else 'python'
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SERVER_PY = os.path.join(SCRIPT_DIR, 'server.py')
 LOG_FILE = os.path.join(SCRIPT_DIR, 'server.log')
@@ -100,7 +100,7 @@ def do_start():
     if os.name == 'nt':
         DETACHED_PROCESS = 0x00000008
         creation_flags = DETACHED_PROCESS
-    subprocess.Popen(
+    proc = subprocess.Popen(
         [PYTHON, SERVER_PY],
         cwd=SCRIPT_DIR,
         stdout=log_f,
@@ -108,6 +108,7 @@ def do_start():
         creationflags=creation_flags if os.name == 'nt' else 0,
         close_fds=True if os.name != 'nt' else False
     )
+    log_f.close()
 
     for i in range(10):
         time.sleep(0.5)

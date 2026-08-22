@@ -180,12 +180,12 @@ class Database:
             script = f.read()
 
         # 去掉注释行，并按分号分割为独立语句
+        # 使用 \n; 分割以避免字段内含分号时误拆分
         statements = []
-        for raw_line in script.split(';'):
+        for raw_line in script.replace('\r\n', '\n').split(';\n'):
             line = raw_line.strip()
             if not line:
                 continue
-            # 过滤掉以 -- 或 # 开头的注释行
             lines = [s for s in line.splitlines() if s.strip() and not s.strip().startswith('--')]
             if lines:
                 statements.append('\n'.join(lines))

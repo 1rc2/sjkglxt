@@ -1,6 +1,6 @@
 /* ==========================================================================
    大学生竞赛成果管理系统 —— 移动端样式（复刻桌面版 PyQt5 配色风格）
-   主色: #1a6fb5  背景: #f0f4f8  标题: #1a5276
+   主色: #4e9acd  背景: #f0f4f8  标题: #1a5276
    ========================================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
@@ -18,7 +18,7 @@ input, select, textarea { font-family: inherit; }
 }
 .btn:active { opacity: .85; }
 .btn-block { width: 100%; padding: 12px; font-size: 15px; }
-.btn-primary { background: #1a6fb5; }
+.btn-primary { background: #4e9acd; }
 .btn-refresh { background: #5dade2; }
 .btn-add     { background: #28b463; }
 .btn-edit    { background: #f39c12; }
@@ -47,16 +47,16 @@ input, select, textarea { font-family: inherit; }
   width: 100%; padding: 11px; border: 1px solid #b0b8c4; border-radius: 6px;
   font-size: 14px; background: #fff; margin-bottom: 14px; outline: none;
 }
-.login-form input:focus { border-color: #1a6fb5; }
+.login-form input:focus { border-color: #4e9acd; }
 .login-tip { color: #7f8c8d; font-size: 12px; text-align: center; margin-bottom: 16px; }
 .login-msg { color: #e74c3c; font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
 .login-setup { text-align: center; margin-bottom: 12px; }
-.login-setup a { color: #1a6fb5; font-size: 12px; text-decoration: none; }
+.login-setup a { color: #4e9acd; font-size: 12px; text-decoration: none; }
 
 /* ---------- 主界面布局 ---------- */
 .main-screen { display: flex; flex-direction: column; height: 100vh; }
 .topbar {
-  background: #1a6fb5; color: #fff; padding: 12px; font-size: 13px;
+  background: #4e9acd; color: #fff; padding: 12px; font-size: 13px;
   font-weight: bold; flex-shrink: 0;
 }
 .content { flex: 1; overflow-y: auto; padding: 10px 10px 80px; }
@@ -69,7 +69,7 @@ input, select, textarea { font-family: inherit; }
   flex: 1; text-align: center; padding: 11px 0; font-size: 13px;
   color: #7f8c8d; cursor: pointer; user-select: none;
 }
-.tabbar-item.active { color: #1a6fb5; font-weight: bold; }
+.tabbar-item.active { color: #4e9acd; font-weight: bold; }
 
 /* ---------- 工具行 / 按钮行 ---------- */
 .toolbar-row {
@@ -151,7 +151,7 @@ tbody tr:active { background: #d4e6f1; }
   width: 100%; padding: 10px; border: 1px solid #b0b8c4; border-radius: 6px;
   font-size: 14px; background: #fff; outline: none;
 }
-.form-item input:focus, .form-item select:focus { border-color: #1a6fb5; }
+.form-item input:focus, .form-item select:focus { border-color: #4e9acd; }
 .form-item input:disabled { background: #f0f4f8; color: #999; }
 .combo-wrap { display: flex; gap: 6px; }
 .combo-wrap select, .combo-wrap input { flex: 1; }
@@ -182,7 +182,7 @@ tbody tr:active { background: #d4e6f1; }
   width: 100%; padding: 10px; border: 1px solid #b0b8c4; border-radius: 6px;
   font-size: 14px; background: #fff; margin-bottom: 14px; outline: none;
 }
-#server-input:focus { border-color: #1a6fb5; }
+#server-input:focus { border-color: #4e9acd; }
 
 /* ==========================================================================
    横屏适配（orientation: landscape）
