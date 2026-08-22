@@ -43,12 +43,14 @@
       </div>
 
       <!-- 多条件联合查询 -->
-      <div class="search-card">
-        <div class="search-title">🔍 多条件联合查询（条件之间为 AND 关系）</div>
-        <div id="search-rows"></div>
-        <div class="btn-row">
-          <button class="btn btn-search" id="btn-search">🔎 查询</button>
-          <button class="btn btn-clear" id="btn-clear">🧹 清空条件</button>
+      <div class="search-card" id="search-card">
+        <div class="search-title" id="search-toggle">🔍 多条件联合查询（条件之间为 AND 关系）<span class="search-arrow">▾</span></div>
+        <div id="search-body">
+          <div id="search-rows"></div>
+          <div class="btn-row">
+            <button class="btn btn-search" id="btn-search">🔎 查询</button>
+            <button class="btn btn-clear" id="btn-clear">🧹 清空条件</button>
+          </div>
         </div>
       </div>
 

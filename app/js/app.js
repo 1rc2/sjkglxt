@@ -215,6 +215,7 @@ function initMeta() {
     $('btn-del').onclick = deleteRecord;
     $('btn-search').onclick = doSearch;
     $('btn-clear').onclick = resetSearch;
+    $('search-toggle').onclick = toggleSearch;
     $('btn-draw').onclick = drawChart;
     $('btn-export').onclick = exportReport;
     $('btn-save').onclick = saveForm;
@@ -389,6 +390,13 @@ function resetSearch() {
     rows[i].children[2].value = '';
   }
   loadData();
+}
+
+/* 查询区折叠/展开（窄屏时节省屏幕空间） */
+function toggleSearch() {
+  var card = $('search-card');
+  var collapsed = card.classList.toggle('collapsed');
+  $('search-body').style.display = collapsed ? 'none' : '';
 }
 
 /* ==========================================================================

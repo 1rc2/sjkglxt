@@ -74,38 +74,50 @@ input, select, textarea { font-family: inherit; }
 
 /* ---------- 工具行 / 按钮行 ---------- */
 .toolbar-row {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
 }
-.toolbar-label { font-size: 13px; color: #333; white-space: nowrap; }
+.toolbar-label { font-size: 12px; color: #333; white-space: nowrap; }
 .toolbar-row select {
-  flex: 1; padding: 9px; border: 1px solid #b0b8c4; border-radius: 6px;
-  font-size: 14px; background: #fff;
+  flex: 1; padding: 8px; border: 1px solid #b0b8c4; border-radius: 6px;
+  font-size: 13px; background: #fff;
 }
-.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.btn-row .btn { flex: 1; min-width: 72px; }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+/* 按钮在窄屏下不换行（文字横排），减小内边距保证 4 个按钮放得下 */
+.btn-row .btn { flex: 1; min-width: 0; padding: 9px 4px; font-size: 13px; white-space: nowrap; }
 .sheet-btn-row { margin-bottom: 0; margin-top: 6px; }
+.sheet-btn-row .btn { padding: 10px 8px; font-size: 14px; }
 
 /* ---------- 查询面板 ---------- */
 .search-card {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 6px;
-  padding: 10px; margin-bottom: 10px;
+  padding: 8px; margin-bottom: 8px;
 }
-.search-title { font-size: 13px; color: #1a5276; font-weight: bold; margin-bottom: 8px; }
-.search-row { display: flex; gap: 6px; margin-bottom: 8px; }
+/* 标题可点击折叠/展开条件区 */
+.search-title {
+  font-size: 13px; color: #1a5276; font-weight: bold; margin-bottom: 6px;
+  cursor: pointer; user-select: none; display: flex;
+  align-items: center; justify-content: space-between;
+}
+.search-arrow { font-size: 12px; transition: transform .2s; }
+.search-card.collapsed .search-arrow { transform: rotate(-90deg); }
+.search-card.collapsed { padding-bottom: 4px; }
+.search-row { display: flex; gap: 6px; margin-bottom: 6px; }
 .search-row select { flex: 2; }
 .search-row select.op { flex: 1; }
 .search-row input  { flex: 2; }
 .search-row select, .search-row input {
-  padding: 8px; border: 1px solid #b0b8c4; border-radius: 6px;
+  padding: 7px; border: 1px solid #b0b8c4; border-radius: 6px;
   font-size: 13px; background: #fff; min-width: 0;
 }
 
 /* ---------- 数据表格 ---------- */
 .table-wrap {
-  overflow-x: auto; background: #fff; border-radius: 6px;
+  overflow-x: auto; overflow-y: auto; max-height: 55vh;
+  background: #fff; border-radius: 6px;
   border: 1px solid #e2e8f0;
 }
-table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 540px; }
+/* 表宽自适应：列少时铺满容器，列多时按内容撑开（配合横向滚动） */
+table { border-collapse: collapse; width: auto; min-width: 100%; font-size: 13px; }
 thead th {
   background: #eaf1f8; color: #1a5276; padding: 9px 10px; white-space: nowrap;
   font-weight: bold; border-bottom: 2px solid #d4e0ec; position: sticky; top: 0;
