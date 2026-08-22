@@ -46,7 +46,8 @@ PUBLIC_PATHS = {'/api/login', '/api/logout', '/api/health', '/'}
 def _check_auth():
     """检查请求是否携带有效 token，未携带返回 None，携带且有效返回 True"""
     path = request.path
-    if path in PUBLIC_PATHS or path.startswith('/app/'):
+    # 公开接口 + 静态资源（css/js/图片/图标等）无需鉴权，仅 /api/ 接口需要 token
+    if path in PUBLIC_PATHS or path.startswith('/app/') or not path.startswith('/api/'):
         return True
     if request.method == 'OPTIONS':
         return True
